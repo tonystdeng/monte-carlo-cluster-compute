@@ -40,5 +40,5 @@ def organize(answers, meta):
     return averaged
 
 
-def saveJSON(organizedAnswer, fileObject):
-    return json.dump(organizedAnswer, fileObject)
+def saveJSON(organizedAnswer):
+    return organizedAnswer
