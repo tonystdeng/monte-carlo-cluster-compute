@@ -1,9 +1,17 @@
 import paramiko
 
-key = "/home/head/.ssh/id_ed25519"
-path_of_transfer="path" 
+KEY = "/home/head/.ssh/id_ed25519"
+HOME_PATH = "/home" 
+HOST = "debian-node"
+USER = "node"
+CLUSTER_DOT_PY = "/home/.../Cluster.py" # REPLACE THIS WITH THE LOCATION OF CLUSTER.PY
 
-def MakeFolder(host, user, key, path_of_transfer, max_node):
+#Path starts at /home/nodeXX. Do not include that in folderPath
+#EXAMPLE: create a folder at /home/nodeXX/ClusterProgram
+#   folderPath = "/ClusterProgram"
+#   MakeFolder(HOST, USER, KEY, "/ClusterProgram", 15)
+
+def MakeFolder(host, user, key, folderPath, max_node):
     for node in range(0, max_node+1): #starts from 0 (0-15)
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -15,7 +23,9 @@ def MakeFolder(host, user, key, path_of_transfer, max_node):
                 key_filename=key
             )
 
-            stdin, stdout, stderr = ssh_client.exec_command("sudo rmdir /home/cc") 
+            nodePath = HOME_PATH + "/node" + str(node)
+
+            stdin, stdout, stderr = ssh_client.exec_command("sudo mkdir " + nodePath + folderPath) 
             print(stdout.read().decode())
             print(stderr.read().decode())           
 
@@ -26,20 +36,8 @@ def MakeFolder(host, user, key, path_of_transfer, max_node):
 
 
 
-
-MakeFolder("debian-node", "node", key, path_of_transfer, 15)
-
-
-#################################
-
-
-import paramiko
-
-key = "/home/head/.ssh/id_ed25519"
-file_to_transfer="/home/head/DELETE_THIS_AFTER"
-path_of_transfer="path" #Specify where the file will be transferred to. Include the file name, not just directory
-
-def transferFiles(host, user, key, file_to_transfer, path_of_transfer, max_node):
+#Path starts at /home/nodeXX. Do not include that in transferPath
+def TransferFiles(host, user, key, file, transferPath, max_node):
     for node in range(0, max_node+1): #starts from 0 (0-15)
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -51,8 +49,10 @@ def transferFiles(host, user, key, file_to_transfer, path_of_transfer, max_node)
                 key_filename=key
             )
 
+            nodePath = HOME_PATH + "/node" + str(node)
+
             sftp = ssh_client.open_sftp()
-            sftp.put(file_to_transfer, path_of_transfer)
+            sftp.put(file, nodePath + transferPath)
             sftp.close()
 
         except Exception as error:
@@ -61,6 +61,7 @@ def transferFiles(host, user, key, file_to_transfer, path_of_transfer, max_node)
             ssh_client.close()
 
 
-
-
-transferFiles("debian-node", "node", key, file_to_transfer, path_of_transfer, 15)
+#Create a folder "ClusterProgram" with a folder "Programs" and a file "Cluster.py" inside
+MakeFolder(HOST, USER, KEY, "/ClusterProgram", 15)
+MakeFolder(HOST, USER, KEY, "/ClusterProgram/Programs", 15)
+TransferFiles(HOST, USER, KEY, CLUSTER_DOT_PY, "/ClusterProgram/Cluster.py", 15)
