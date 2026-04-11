@@ -11,12 +11,13 @@ for i in range(info.clusterNum):
 
     homePath = "/home/" + str(info.usernames[i])
 
-    stdin, stdout, stderr = client.exec_command(f"mkdir -p {homePath}/ClusterProgram/Programs")
+    stdin, stdout, stderr = client.exec_command(f"mkdir -p {homePath}/{info.mainFolderName}/{info.programsFolderName}")
     print(stdout.read().decode())
     print(stderr.read().decode())
 
     sftp = client.open_sftp()
-    sftp.put(os.path.dirname(os.path.abspath(__file__)) + "/cluster.py", homePath + "/ClusterProgram/Cluster.py")
+    sftp.put(os.path.dirname(os.path.abspath(__file__)) + "/cluster.py", 
+             homePath + f"/{info.mainFolderName}/{info.clusterProgramName}.py")
     sftp.close()
 
     client.close()
