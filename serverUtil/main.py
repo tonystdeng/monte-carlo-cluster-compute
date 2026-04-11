@@ -1,4 +1,4 @@
-# distrobute compute.py sftp
+# distrobute simulations sftp
 # intereact with heap.py's info function for parameters
 # ssh into cluster computers and fun the cluster program
 # collect the console output of cluster program
