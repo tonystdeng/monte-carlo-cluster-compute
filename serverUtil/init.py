@@ -17,7 +17,7 @@ for i in range(info.clusterNum):
 
     sftp = client.open_sftp()
     sftp.put(os.path.dirname(os.path.abspath(__file__)) + "/cluster.py", 
-             homePath + f"/{info.mainFolderName}/{info.clusterProgramName}.py")
+             homePath + f"/{info.mainFolderName}/{info.clusterProgramName}")
     sftp.close()
 
     client.close()
