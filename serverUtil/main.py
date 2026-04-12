@@ -34,9 +34,15 @@ client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 for i in range(info.clusterNum):
+    destination = f"/home/{str(info.usernames[i])}/{info.mainFolderName}/{info.programsFolderName}/{simulationName}"
+
     client.connect(hostname=info.hostnames[i], username=info.usernames[i], password=info.passwords[i])
+
+    # deleting duplicates if any
+    client.exec_command(f"rm -rf {destination}")
+
     sftp = client.open_sftp()
-    sftp.put(simulationPath, f"/home/{str(info.usernames[i])}/{info.mainFolderName}/{info.programsFolderName}/{simulationName}")
+    sftp.put(simulationPath, destination)
     
     sftp.close()
     client.close()
@@ -54,10 +60,10 @@ async def runCluster(index, parameters, metaInfo):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=info.hostnames[index], username=info.usernames[index], password=info.passwords[index])
 
-    # fun cluster program with parameter in json format
-    json.dumps({"parameters":parameters, "metaInfo": metaInfo})
+    # fun cluster program with parameter in json format and the simulation name
+    inputs = json.dumps({"parameters":parameters, "metaInfo": metaInfo})
     clusterProgramPath = f"/home/{str(info.usernames[index])}/{info.mainFolderName}/{info.clusterProgramName}"
-    stdin, stdout, stderr = client.exec_command(f"python {clusterProgramPath} ")
+    stdin, stdout, stderr = client.exec_command(f"python {clusterProgramPath} {inputs} {simulationName}")
     print(stderr.read().decode())
 
     # decode returns in text that should also be json formate
