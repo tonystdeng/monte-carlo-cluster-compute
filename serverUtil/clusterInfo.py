@@ -12,3 +12,7 @@ passwords = ["psw" for _ in avalibleIndex]
 mainFolderName = "ClusterProgram"
 programsFolderName = "Programs"
 clusterProgramName = "Cluster.py"
+
+
+# key settings
+clusterOrganize = True

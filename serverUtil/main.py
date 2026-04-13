@@ -60,8 +60,8 @@ async def runCluster(index, parameters, metaInfo):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=info.hostnames[index], username=info.usernames[index], password=info.passwords[index])
 
-    # fun cluster program with parameter in json format and the simulation name
-    inputs = json.dumps({"parameters":parameters, "metaInfo": metaInfo})
+    # fun cluster program with parameter in json format, the simulation name, and command to organize or not
+    inputs = json.dumps([parameters, metaInfo])
     clusterProgramPath = f"/home/{str(info.usernames[index])}/{info.mainFolderName}/{info.clusterProgramName}"
     stdin, stdout, stderr = client.exec_command(f"python {clusterProgramPath} {inputs} {simulationName}")
     print(stderr.read().decode())
