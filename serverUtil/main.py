@@ -5,8 +5,15 @@ import asyncio
 import json
 import warnings
 from datetime import datetime
+import importlib.util
 
 import clusterInfo as info
+import util
+
+# resets cluster assets:
+import init
+print("Progress Report: Cluster assets updated through ssh to all clusters.\n")
+
 
 _, simulationName, simulationNumber = sys.argv
 
@@ -42,14 +49,21 @@ for i in range(info.clusterNum):
     client.exec_command(f"rm -rf {destination}")
 
     sftp = client.open_sftp()
-    sftp.put(simulationPath, destination)
+    util.sftp_put_folder(sftp,simulationPath,destination)
     
     sftp.close()
-    client.close()
+client.close()
+print("Progress Report: Simulation programs uploaded through ssh to all clusters.\n")
 
 
 # intereact with heap.py's info function for parameters
-head = __import__(simulationPath + "/head.py")
+spec = importlib.util.spec_from_file_location(
+    "head",
+    simulationPath + "/head.py"
+)
+head = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(head)
+
 parameters, metaInfo = head.info(simulationNumber)
 
 
@@ -60,14 +74,15 @@ async def runCluster(index, parameters, metaInfo):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=info.hostnames[index], username=info.usernames[index], password=info.passwords[index])
 
-    # fun cluster program with parameter in json format, the simulation name, and command to organize or not
+    # run cluster program with parameter in json format, the simulation name, and command to organize or not
     inputs = json.dumps([parameters, metaInfo])
     clusterProgramPath = f"/home/{str(info.usernames[index])}/{info.mainFolderName}/{info.clusterProgramName}"
-    stdin, stdout, stderr = client.exec_command(f"python {clusterProgramPath} {inputs} {simulationName}")
-    print(stderr.read().decode())
+    stdin, stdout, stderr = client.exec_command(f"{info.pythonTriggerCommand} \"{clusterProgramPath}\" \"{inputs}\" \"{simulationName}\"")
+    #print("Possible errors will be printed here:", stderr.read().decode(), )
 
     # decode returns in text that should also be json formate
-    return json.loads(stdout.read().decode())
+    returns = stdout.read().decode()
+    return json.loads(returns)
 
 
 # collect the console output of cluster program
@@ -76,18 +91,25 @@ async def runClusters(parameters, metaInfo):
     results = await asyncio.gather(*(runCluster(i, parameters[i*simulationPerCluster:(i+1)*simulationPerCluster], metaInfo) for i in range(info.clusterNum)))
     return results
 
+# and run that computation
+print("Computation started...\n")
+results = asyncio.run(runClusters(parameters, metaInfo))
+print("Computation completed, orgnizing outputs...\n")
 
 # give that output mentioned above to the orgnize funciton in head.py
-results = asyncio.run(runClusters(parameters, metaInfo))
 orgnizedData = head.organize(results, metaInfo)
 # give the orgnized data into the saveJSON function and get a json file
 orgnizedDataJSON = head.saveJSON(orgnizedData)
 # save the json file under results/simulationName folder
 clusterHeadPath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print("Orgnized, saving.\n")
 saveDir = f"{clusterHeadPath}/results/{simulationName}"
 try:
     os.makedirs(saveDir)
-except OSError:pass
-with open(f"{saveDir}/{datetime.now()}.json") as file:
-    file.write(orgnizedDataJSON)
+except FileExistsError:pass
+fileDir = f"{saveDir}/{datetime.now()}.json"
+with open(fileDir, "w") as file:
+    json.dump(orgnizedDataJSON, file)
 #which marks the end of the comput session
+
+print(f"File saved to {fileDir}, program completes successfully.")

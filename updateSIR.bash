@@ -1,1 +1,2 @@
+rm -rf ./simulations/sir
 git clone git@github.com:tonystdeng/monte-carlo-sir.git ./simulations/sir

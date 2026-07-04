@@ -1,6 +1,6 @@
 clusterNum = 2
 
-avalibleIndex = [14,15] # [i for i in range(16)]
+avalibleIndex = [0, 1] # [i for i in range(clusterNum)]
 
 hostnames = [f"debian-node{i}" for i in avalibleIndex]
 
@@ -14,5 +14,6 @@ programsFolderName = "Programs"
 clusterProgramName = "Cluster.py"
 
 
-# key settings
+# cluster settings
 clusterOrganize = True
+pythonTriggerCommand = "python3"
